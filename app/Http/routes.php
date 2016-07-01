@@ -13,3 +13,9 @@
 
 
 Route::get('import-third-party-data','ExternalAPIController@index');
+
+//Route::auth();
+
+Route::group(['prefix' => 'api/v1', 'middleware' => 'auth:api'], function () {
+    Route::post('/short', 'UrlMapperController@store');
+});
