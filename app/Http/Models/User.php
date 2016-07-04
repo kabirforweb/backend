@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace App\Http\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
@@ -23,4 +23,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password', 'remember_token',
     ];
+
+    public function findByEmail($email){
+        return $this->where('email',$email)->first();
+    }
 }

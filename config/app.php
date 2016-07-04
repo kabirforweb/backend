@@ -39,7 +39,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
+    'url' => env('APP_URL', 'http://localhost/lineupbeast/backend/public/'),
 
     /*
     |--------------------------------------------------------------------------
@@ -155,7 +155,8 @@ return [
         App\Providers\AuthServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-
+        'Tymon\JWTAuth\Providers\JWTAuthServiceProvider',
+        Mews\Purifier\PurifierServiceProvider::class,
     ],
 
     /*
@@ -201,6 +202,9 @@ return [
         'URL' => Illuminate\Support\Facades\URL::class,
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
+        'JWTAuth' => 'Tymon\JWTAuth\Facades\JWTAuth',
+        'JWTFactory' => 'Tymon\JWTAuth\Facades\JWTFactory',
+        'Purifier' => Mews\Purifier\Facades\Purifier::class,
 
     ],
 
