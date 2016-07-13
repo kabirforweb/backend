@@ -10,6 +10,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Http\Models\User;
 use Hash;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends BeastController
 {
@@ -28,27 +29,42 @@ class UserController extends BeastController
     public function register(Request $request){
 
         if( null === $request->email    ||
-            null === $request->password ||
-            null === $request->name
+            null === $request->firstname
         ){
             return response()->json(['error' => 'One of the required field is empty'],401);
         }
 
-        if(strlen($request->get('password')) < 6){
-            return response()->json(['error'=>'Password must be 6 characters in length']);
+        if($request->has('social_id') && $request->has('password')){
+            return response()->json(['error' => 'One of the required field is empty'],401);
+        }
+
+        if($request->has('password') && strlen($request->get('password')) < 6){
+            return response()->json(['error'=>'Password must be 6 characters in length'],500);
         }
 
         $user = $this->user->findByEmail($request->email);
 
-        if(null != $user ){
-            return response()->json(['error'=>'Email already exists'],500);
+        if(null != $user && !$request->has('social_id')){
+            return response()->json(['error'=>'This email is already registered, please choose different one'],500);
+        }elseif(null != $user && $request->has('social_id')){
+            $token  =   JWTAuth::fromUser($user);
+            return response()->json(compact('token','user'));
         }
 
         try{
 
-            $this->user->name  =   $request->name;
-            $this->user->email  =   $request->email;
-            $this->user->password  =   Hash::make($request->password);
+            $this->user->firstname  =   $request->firstname;
+
+            if($request->has('lastname')){
+                $this->user->lastname  =   $request->get('lastname');
+            }
+
+            if($request->has('social_id')){
+                $this->user->social_id  =   $request->get('social_id');
+            }
+
+            $this->user->email      =   $request->email;
+            $this->user->password   =   Hash::make($request->password);
             $this->user->save();
 
         }catch (\Exception $e){
@@ -59,8 +75,8 @@ class UserController extends BeastController
         }
 
         $token  =   JWTAuth::fromUser($this->user);
-
-        return response()->json(compact('token'));
+        $user   =   $this->user;
+        return response()->json(compact('token','user'));
     }
 
     /**
@@ -68,7 +84,7 @@ class UserController extends BeastController
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function authenticate(Request $request)
+    public function authenticate(Request $request, User $user)
     {
         if(null === $request->email || null === $request->password){
             return response()->json(['error' => 'One of the required field is empty'],401);
@@ -78,13 +94,14 @@ class UserController extends BeastController
 
         try {
             if (! $token = JWTAuth::attempt($credentials)) {
-                return response()->json(['error' => 'invalid_credentials'], 401);
+                return response()->json(['error' => 'Invalid Email/Password'], 401);
             }
         } catch (JWTException $e) {
             return response()->json(['error' => 'could_not_create_token'], 500);
         }
 
-        return response()->json(compact('token'));
+        $user   =   $user->findByEmail($request->email);
+        return response()->json(compact('token','user'));
     }
 
     /**
@@ -106,7 +123,7 @@ class UserController extends BeastController
         }
 
         $to_email       =   $user->email;
-        $to_name        =   $user->name;
+        $to_name        =   $user->firstname . $user->lastname;
         $data['token']  =   str_random(40) . Carbon::now()->timestamp;
 
         $user->password_reset_token  =   $data['token'];
@@ -118,7 +135,7 @@ class UserController extends BeastController
             $this->sendEmail('forgot_password',$data,$to_email,$to_name);
 
         }catch (\Exception $e){
-            return respose()->json(['error' =>  'Some error occurred, please try again']);
+            return respose()->json(['error' =>  'Some error occurred, please try again'],500);
         }
 
         return response()->json(['success'  =>  'An email has been sent to you, to reset password!']);
@@ -137,19 +154,19 @@ class UserController extends BeastController
         $user   =   $this->user->findByEmail($request->get('email'));
 
         if(!$user){
-            return response()->json(['error'=>'User doesn\'t exist in system']);
+            return response()->json(['error'=>'User doesn\'t exist in system'],500);
         }
 
         if($user->password_reset_token !== $request->get('token')){
-            return response()->json(['error'=>'This link has expired or Invalid']);
+            return response()->json(['error'=>'This link has expired or Invalid'],400);
         }
 
         if($request->get('password') !== $request->get('confirm_password')){
-            return response()->json(['error'=>'Password and confirm password does not match']);
+            return response()->json(['error'=>'Password and confirm password does not match'],500);
         }
 
         if(strlen($request->get('password')) < 6){
-            return response()->json(['error'=>'Password must be 6 characters in length']);
+            return response()->json(['error'=>'Password must be 6 characters in length'],500);
         }
 
         $user->password_reset_token =   '';

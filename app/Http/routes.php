@@ -8,6 +8,7 @@ Route::post('user/auth','UserController@authenticate');
 Route::post('user/forgot-password','UserController@forgotPassword');
 Route::post('user/confirm-password','UserController@confirmPassword');
 
+Route::get('test','ExternalAPIController@teams');
 
 
 

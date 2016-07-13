@@ -11,12 +11,12 @@ class ExternalAPIController extends Controller
 {
 
     const API_URL                                       =   'https://api.fantasydata.net/mlb/v2/json';
-    const URL_SEPARATOR                                 =   PATH_SEPARATOR;
+    const URL_SEPARATOR                                 =   '/';
 
     //-- Endpoints
     const MLB_TEAMS                                     =   'teams';
     const MLB_ARE_GAME_IN_PROGRESS                      =   'AreAnyGamesInProgress';
-    const MLB_BATTERS_VS_BATTERS_STATS                  =   'HitterVsPitcher';
+    const MLB_BATTERS_VS_PITCHERS_STATS                 =   'HitterVsPitcher';
     const MLB_BOX_SCORES                                =   'BoxScore';
     const MLB_BOX_SCORES_BY_DATE                        =   'BoxScores';
     const MLB_BOX_SCORES_BY_DATE_DELTA                  =   'BoxScoresDelta';
@@ -108,6 +108,8 @@ class ExternalAPIController extends Controller
 
     public function addToDB($table,$data){
 
+        $this->checkTableAndColumns();
+
         if(empty($data) || !is_array($data) || !count($data)){
             return false;
         }
@@ -146,13 +148,22 @@ class ExternalAPIController extends Controller
         }
     }
 
+    public function checkTableAndColumns($table,$cols){
+
+
+    }
+
+    public function isTableExists($table){
+
+    }
+
     public function curl($send_url) {
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_HTTPHEADER, array( 'Ocp-Apim-Subscription-Key: 43ed5d29a9b5413e8254a38b55ddf73c' ));
         curl_setopt($ch, CURLOPT_URL, $send_url);
-        curl_setopt ($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_VERBOSE, 0);
         $result = curl_exec($ch);
