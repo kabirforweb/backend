@@ -128,49 +128,65 @@ class UserController extends BeastController
 
         $user->password_reset_token  =   $data['token'];
 
-        try{
+         try{
 
             $user->save();
 
             $this->sendEmail('forgot_password',$data,$to_email,$to_name);
 
         }catch (\Exception $e){
-            return respose()->json(['error' =>  'Some error occurred, please try again'],500);
+
+            Log::error('Failed to send forgot password email at') . $e->getMessage() . ' at Line No. ' . $e->getLine();
+            return response()->json(['error' =>  'Some error occurred, please try again'],500);
         }
 
         return response()->json(['success'  =>  'An email has been sent to you, to reset password!']);
     }
 
+    public function verifyForgotPasswordToken($token){
+
+        if(null === $token){
+            return response()->json(['error'=>'One of the required field is empty'],401);
+        }
+
+        $user   =   User::where('password_reset_token',$token)->first();
+
+        if(!$user){
+            return response()->json(['error'=>'This URL is no longer valid'],401);
+        }
+
+//        $user->password_reset_token =   '';
+//
+//        $user->save();
+
+        return response()->json(['user_id'  =>  $user->id]);
+
+    }
+
     public function confirmPassword(Request $request){
 
-        if( null === $request->get('email')     ||
-            null === $request->get('token')     ||
+        if( null === $request->get('user_id')   ||
             null === $request->get('password')  ||
             null === $request->get('confirm_password')
         ){
             return response()->json(['error'=>'One of the required field is empty']);
         }
 
-        $user   =   $this->user->findByEmail($request->get('email'));
-
-        if(!$user){
-            return response()->json(['error'=>'User doesn\'t exist in system'],500);
-        }
-
-        if($user->password_reset_token !== $request->get('token')){
-            return response()->json(['error'=>'This link has expired or Invalid'],400);
+        if(strlen($request->get('password')) < 6){
+            return response()->json(['error'=>'Password must be 6 characters in length'],500);
         }
 
         if($request->get('password') !== $request->get('confirm_password')){
             return response()->json(['error'=>'Password and confirm password does not match'],500);
         }
 
-        if(strlen($request->get('password')) < 6){
-            return response()->json(['error'=>'Password must be 6 characters in length'],500);
+        $user   =   $this->user->find($request->get('user_id'));
+
+        if(!$user){
+            return response()->json(['error'=>'User doesn\'t exist in system'],500);
         }
 
-        $user->password_reset_token =   '';
-
+        $user->password =   \Illuminate\Support\Facades\Hash::make($request->get('password'));
         $user->save();
 
         return response()->json(['success'  =>  'Password reset successfully']);
