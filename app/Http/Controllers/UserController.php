@@ -119,7 +119,7 @@ class UserController extends BeastController
         $user   =   $this->user->findByEmail($request->email);
 
         if(!$user){
-            return response()->json(['error' => 'Invalid user found'],401);
+            return response()->json(['error' => 'This email is not registered in system.'],401);
         }
 
         $to_email       =   $user->email;
