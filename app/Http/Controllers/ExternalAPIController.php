@@ -148,10 +148,10 @@ class ExternalAPIController extends Controller
         }
     }
 
-    public function checkTableAndColumns($table,$cols){
-
-
-    }
+//    public function checkTableAndColumns($table,$cols){
+//
+//
+//    }
 
     public function isTableExists($table){
 

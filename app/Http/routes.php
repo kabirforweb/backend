@@ -11,6 +11,8 @@ Route::get('user/verify-forgot-password-token/{token}','UserController@verifyFor
 
 Route::get('test','ExternalAPIController@teams');
 
+Route::get('latestMatches','ScheduleController@upcomingMatches');
+
 
 
 
